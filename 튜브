@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나만의 학습 포털 & 랭킹</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Pretendard) -->
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- 회원가입 / 로그인 모달 (처음 접속 시 또는 닉네임 변경 시) -->
+    <div id="auth-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-md shadow-2xl border border-slate-100">
+            <div class="text-center mb-6">
+                <div class="bg-indigo-600 text-white w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <i class="fa-solid fa-user-astronaut text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-800">학습 포털 프로필 설정</h2>
+                <p class="text-xs text-slate-400 mt-1">사용하실 닉네임을 입력하고 랭킹 시스템에 참여하세요!</p>
+            </div>
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 mb-1">닉네임</label>
+                    <input type="text" id="nickname-input" required placeholder="예: 열공스터디러" 
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-sm font-semibold transition shadow-md">
+                    시작하기
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 네비게이션 바 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                    나만의 학습 포털
+                </h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="user-profile-badge" class="hidden sm:flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full text-xs font-semibold">
+                    <i class="fa-solid fa-user"></i> <span id="display-nickname"></span>
+                </div>
+                <div id="current-date" class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full hidden md:block">
+                    <!-- 날짜 표시 -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 영역 -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow grid grid-cols-1 lg:grid-cols-3 gap-8 w-full">
+        
+        <!-- 왼쪽 영역 (투두 리스트 & 학습 목표) -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- 요약 카드 -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="bg-indigo-50 text-indigo-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-list-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400">오늘의 할 일</p>
+                        <p id="todo-stats" class="text-xl font-bold text-slate-800">0 / 0 개 완료</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-clock text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400">총 집중 시간</p>
+                        <p id="total-study-time" class="text-xl font-bold text-slate-800">0분</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                    <div class="bg-violet-50 text-violet-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-bookmark text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400">저장된 학습 자료</p>
+                        <p id="material-stats" class="text-xl font-bold text-slate-800">0 개</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 투두 리스트 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye text-indigo-600"></i> 오늘의 학습 목표
+                    </h2>
+                </div>
+                <form id="todo-form" class="flex gap-2 mb-4">
+                    <input type="text" id="todo-input" placeholder="오늘 공부할 내용을 입력하세요 (예: 수학 3단원 복습)" 
+                           class="flex-grow px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <select id="todo-category" class="px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="국어">국어</option>
+                        <option value="수학">수학</option>
+                        <option value="영어">영어</option>
+                        <option value="과학">과학</option>
+                        <option value="사회">사회</option>
+                        <option value="기타">기타</option>
+                    </select>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">
+                        추가
+                    </button>
+                </form>
+                <ul id="todo-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                    <!-- 투두 아이템이 여기에 동적으로 추가됩니다 -->
+                </ul>
+            </div>
+
+            <!-- 과목별 학습 자료 및 링크 모음 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-link text-indigo-600"></i> 과목별 학습 자료 & 링크
+                    </h2>
+                </div>
+                <form id="material-form" class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+                    <input type="text" id="material-title" placeholder="자료 이름 (예: 개념원리 강의)" 
+                           class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <input type="url" id="material-url" placeholder="웹사이트 주소 (https://...)" 
+                           class="px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <div class="flex gap-2">
+                        <select id="material-category" class="flex-grow px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="국어">국어</option>
+                            <option value="수학">수학</option>
+                            <option value="영어">영어</option>
+                            <option value="과학">과학</option>
+                            <option value="사회">사회</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">
+                            저장
+                        </button>
+                    </div>
+                </form>
+                <div id="material-list" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
+                    <!-- 자료 카드가 여기에 추가됩니다 -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 오른쪽 영역 (뽀모도로 타이머, 랭킹 시스템 & 일정) -->
+        <div class="space-y-8">
+            
+            <!-- 뽀모도로 타이머 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-stopwatch text-indigo-600"></i> 뽀모도로 집중 타이머
+                </h2>
+                
+                <div class="flex justify-center gap-2 mb-6">
+                    <button id="mode-study" onclick="setTimerMode('study')" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white transition">집중 (25분)</button>
+                    <button id="mode-break" onclick="setTimerMode('break')" class="px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 transition">휴식 (5분)</button>
+                </div>
+
+                <div id="timer-display" class="text-5xl font-black text-slate-800 tracking-wider mb-6">
+                    25:00
+                </div>
+
+                <div class="flex justify-center gap-3">
+                    <button id="timer-toggle" onclick="toggleTimer()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm flex items-center gap-2">
+                        <i id="timer-icon" class="fa-solid fa-play"></i> <span id="timer-btn-text">시작</span>
+                    </button>
+                    <button onclick="resetTimer()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-semibold transition">
+                        초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- 회원 공부 시간 랭킹 시스템 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-trophy text-amber-500"></i> 스터디 랭킹 경쟁
+                    </h2>
+                    <span class="text-xs text-slate-400">실시간 반영</span>
+                </div>
+                <div id="leaderboard-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                    <!-- 랭킹 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </div>
+
+            <!-- 학습 일정 / 캘린더 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-days text-indigo-600"></i> 중요 학습 일정
+                    </h2>
+                </div>
+                <form id="event-form" class="space-y-2 mb-4">
+                    <input type="text" id="event-title" placeholder="일정 내용 (예: 수학 중간고사)" 
+                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    <div class="flex gap-2">
+                        <input type="date" id="event-date" 
+                               class="flex-grow px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition shadow-sm">
+                            등록
+                        </button>
+                    </div>
+                </form>
+                <ul id="event-list" class="space-y-2.5 max-h-52 overflow-y-auto pr-1">
+                    <!-- 일정 목록이 여기에 추가됩니다 -->
+                </ul>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-auto text-center text-xs text-slate-400">
+        <p>열심히 공부하는 당신을 응원합니다! ✨</p>
+    </footer>
+
+    <!-- 자바스크립트 로직 -->
+    <script>
+        // 오늘 날짜 표시
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ko-KR', options);
+
+        // 데이터 상태 관리 (LocalStorage 연동)
+        let currentUser = localStorage.getItem('study_current_user') || '';
+        let todos = JSON.parse(localStorage.getItem('study_todos')) || [];
+        let materials = JSON.parse(localStorage.getItem('study_materials')) || [];
+        let events = JSON.parse(localStorage.getItem('study_events')) || [];
+        let totalStudyMinutes = parseInt(localStorage.getItem('study_total_time')) || 0;
+
+        // 가상 회원 랭킹 데이터 풀 (내 공부 시간이 늘어나면 순위가 올라갑니다)
+        let competitors = JSON.parse(localStorage.getItem('study_competitors')) || [
+            { name: '공부의신', minutes: 180 },
+            { name: '합격기원', minutes: 145 },
+            { name: '도서관토박이', minutes: 95 },
+            { name: '열공마스터', minutes: 60 },
+            { name: '새벽형인간', minutes: 30 }
+        ];
+
+        // ------------------ 회원가입 및 프로필 로직 ------------------
+        const authModal = document.getElementById('auth-modal');
+        const authForm = document.getElementById('auth-form');
+        const nicknameInput = document.getElementById('nickname-input');
+        const displayNickname = document.getElementById('display-nickname');
+        const userProfileBadge = document.getElementById('user-profile-badge');
+
+        function checkAuth() {
+            if (!currentUser) {
+                authModal.classList.remove('hidden');
+            } else {
+                authModal.classList.add('hidden');
+                displayNickname.innerText = currentUser;
+                userProfileBadge.classList.remove('hidden');
+                updateLeaderboard();
+            }
+        }
+
+        authForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nickname = nicknameInput.value.trim();
+            if (!nickname) return;
+            currentUser = nickname;
+            localStorage.setItem('study_current_user', currentUser);
+            
+            // 기존에 라이벌 목록에 없으면 추가
+            if (!competitors.some(c => c.name === currentUser)) {
+                competitors.push({ name: currentUser, minutes: Math.floor(totalStudyMinutes) });
+            }
+            
+            checkAuth();
+            renderTodos();
+        });
+
+        // ------------------ 랭킹 시스템 로직 ------------------
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboard-list');
+            leaderboardList.innerHTML = '';
+
+            // 내 공부 시간 반영
+            let myRecord = competitors.find(c => c.name === currentUser);
+            if (myRecord) {
+                myRecord.minutes = Math.floor(totalStudyMinutes);
+            } else if (currentUser) {
+                competitors.push({ name: currentUser, minutes: Math.floor(totalStudyMinutes) });
+            }
+
+            // 공부 시간 기준 내림차순 정렬
+            competitors.sort((a, b) => b.minutes - a.minutes);
+            localStorage.setItem('study_competitors', JSON.stringify(competitors));
+
+            competitors.forEach((comp, index) => {
+                const isMe = comp.name === currentUser;
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-indigo-50/70 border-indigo-200 font-bold text-indigo-900' : 'bg-white border-slate-100 text-slate-700'} text-sm`;
+                
+                let rankBadge = `<span class="w-6 text-center text-xs font-bold text-slate-400">#${index + 1}</span>`;
+                if (index === 0) rankBadge = `<span class="w-6 text-center text-amber-500 font-bold"><i class="fa-solid fa-crown"></i></span>`;
+                else if (index === 1) rankBadge = `<span class="w-6 text-center text-slate-400 font-bold">2</span>`;
+                else if (index === 2) rankBadge = `<span class="w-6 text-center text-amber-700 font-bold">3</span>`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        ${rankBadge}
+                        <span>${comp.name} ${isMe ? '(나)' : ''}</span>
+                    </div>
+                    <span class="text-xs bg-slate-100 px-2.5 py-1 rounded-full text-slate-600 font-semibold">${comp.minutes}분 집중</span>
+                `;
+                leaderboardList.appendChild(div);
+            });
+        }
+
+        // ------------------ 투두 리스트 로직 ------------------
+        const todoForm = document.getElementById('todo-form');
+        const todoInput = document.getElementById('todo-input');
+        const todoCategory = document.getElementById('todo-category');
+        const todoList = document.getElementById('todo-list');
+
+        function renderTodos() {
+            todoList.innerHTML = '';
+            if (todos.length === 0) {
+                todoList.innerHTML = '<p class="text-center text-slate-400 py-4 text-sm">등록된 학습 목표가 없습니다.</p>';
+            }
+            todos.forEach((todo, index) => {
+                const li = document.createElement('li');
+                li.className = `flex items-center justify-between p-3 rounded-xl border ${todo.completed ? 'bg-slate-50 border-slate-100 text-slate-400 line-through' : 'bg-white border-slate-200 text-slate-700'} transition`;
+                li.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" ${todo.completed ? 'checked' : ''} onclick="toggleTodo(${index})" class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer">
+                        <span class="text-sm font-medium">${todo.text}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${todo.completed ? 'bg-slate-200 text-slate-500' : 'bg-indigo-50 text-indigo-600'}">${todo.category}</span>
+                    </div>
+                    <button onclick="deleteTodo(${index})" class="text-slate-400 hover:text-red-500 transition px-2 py-1 text-sm"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                todoList.appendChild(li);
+            });
+            updateStats();
+            localStorage.setItem('study_todos', JSON.stringify(todos));
+        }
+
+        todoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!todoInput.value.trim()) return;
+            todos.push({ text: todoInput.value.trim(), category: todoCategory.value, completed: false });
+            todoInput.value = '';
+            renderTodos();
+        });
+
+        window.toggleTodo = function(index) {
+            todos[index].completed = !todos[index].completed;
+            renderTodos();
+        };
+
+        window.deleteTodo = function(index) {
+            todos.splice(index, 1);
+            renderTodos();
+        };
+
+        // ------------------ 학습 자료 로직 ------------------
+        const materialForm = document.getElementById('material-form');
+        const materialTitle = document.getElementById('material-title');
+        const materialUrl = document.getElementById('material-url');
+        const materialCategory = document.getElementById('material-category');
+        const materialList = document.getElementById('material-list');
+
+        function renderMaterials() {
+            materialList.innerHTML = '';
+            if (materials.length === 0) {
+                materialList.innerHTML = '<p class="col-span-2 text-center text-slate-400 py-4 text-sm">저장된 학습 자료가 없습니다.</p>';
+            }
+            materials.forEach((mat, index) => {
+                const div = document.createElement('div');
+                div.className = 'p-3 rounded-xl border border-slate-200 bg-white flex flex-col justify-between gap-2 shadow-sm';
+                div.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">${mat.category}</span>
+                            <h4 class="text-sm font-bold text-slate-800 mt-1">${mat.title}</h4>
+                        </div>
+                        <button onclick="deleteMaterial(${index})" class="text-slate-400 hover:text-red-500 transition text-sm"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                    <a href="${mat.url}" target="_blank" class="text-xs text-indigo-600 hover:underline flex items-center gap-1 font-medium mt-1">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> 링크 바로가기
+                    </a>
+                `;
+                materialList.appendChild(div);
+            });
+            updateStats();
+            localStorage.setItem('study_materials', JSON.stringify(materials));
+        }
+
+        materialForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!materialTitle.value.trim() || !materialUrl.value.trim()) return;
+            materials.push({ title: materialTitle.value.trim(), url: materialUrl.value.trim(), category: materialCategory.value });
+            materialTitle.value = '';
+            materialUrl.value = '';
+            renderMaterials();
+        });
+
+        window.deleteMaterial = function(index) {
+            materials.splice(index, 1);
+            renderMaterials();
+        };
+
+        // ------------------ 중요 일정 로직 ------------------
+        const eventForm = document.getElementById('event-form');
+        const eventTitle = document.getElementById('event-title');
+        const eventDate = document.getElementById('event-date');
+        const eventList = document.getElementById('event-list');
+
+        function renderEvents() {
+            eventList.innerHTML = '';
+            if (events.length === 0) {
+                eventList.innerHTML = '<p class="text-center text-slate-400 py-4 text-sm">등록된 일정이 없습니다.</p>';
+            }
+            events.forEach((ev, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white text-sm';
+                li.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="bg-violet-50 text-violet-600 font-bold text-xs px-2 py-1 rounded-lg">${ev.date}</span>
+                        <span class="font-medium text-slate-700">${ev.title}</span>
+                    </div>
+                    <button onclick="deleteEvent(${index})" class="text-slate-400 hover:text-red-500 transition px-2 py-1"><i class="fa-solid fa-trash-can"></i></button>
+                `;
+                eventList.appendChild(li);
+            });
+            localStorage.setItem('study_events', JSON.stringify(events));
+        }
+
+        eventForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (!eventTitle.value.trim() || !eventDate.value) return;
+            events.push({ title: eventTitle.value.trim(), date: eventDate.value });
+            eventTitle.value = '';
+            eventDate.value = '';
+            renderEvents();
+        });
+
+        window.deleteEvent = function(index) {
+            events.splice(index, 1);
+            renderEvents();
+        };
+
+        // ------------------ 뽀모도로 타이머 로직 ------------------
+        let timerInterval = null;
+        let isStudyMode = true;
+        let timeLeft = 25 * 60;
+        let isRunning = false;
+
+        const timerDisplay = document.getElementById('timer-display');
+        const timerToggleBtn = document.getElementById('timer-toggle');
+        const timerIcon = document.getElementById('timer-icon');
+        const timerBtnText = document.getElementById('timer-btn-text');
+        const modeStudyBtn = document.getElementById('mode-study');
+        const modeBreakBtn = document.getElementById('mode-break');
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        window.setTimerMode = function(mode) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timerIcon.className = 'fa-solid fa-play';
+            timerBtnText.innerText = '시작';
+
+            if (mode === 'study') {
+                isStudyMode = true;
+                timeLeft = 25 * 60;
+                modeStudyBtn.className = 'px-4 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white transition';
+                modeBreakBtn.className = 'px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 transition';
+            } else {
+                isStudyMode = false;
+                timeLeft = 5 * 60;
+                modeBreakBtn.className = 'px-4 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white transition';
+                modeStudyBtn.className = 'px-4 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 transition';
+            }
+            updateTimerDisplay();
+        };
+
+        window.toggleTimer = function() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                timerIcon.className = 'fa-solid fa-play';
+                timerBtnText.innerText = '시작';
+            } else {
+                isRunning = true;
+                timerIcon.className = 'fa-solid fa-pause';
+                timerBtnText.innerText = '일시정지';
+
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        if (isStudyMode) {
+                            totalStudyMinutes += 1/60; // 초 단위 누적을 분 단위로 환산
+                            localStorage.setItem('study_total_time', Math.floor(totalStudyMinutes));
+                            updateStats();
+                            updateLeaderboard();
+                        }
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        isRunning = false;
+                        alert(isStudyMode ? '집중 시간이 끝났습니다! 휴식을 취하세요.' : '휴식 시간이 끝났습니다! 다시 힘내볼까요?');
+                        setTimerMode(isStudyMode ? 'break' : 'study');
+                    }
+                }, 1000);
+            }
+        };
+
+        window.resetTimer = function() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timerIcon.className = 'fa-solid fa-play';
+            timerBtnText.innerText = '시작';
+            timeLeft = isStudyMode ? 25 * 60 : 5 * 60;
+            updateTimerDisplay();
+        };
+
+        // ------------------ 통계 업데이트 ------------------
+        function updateStats() {
+            const completedCount = todos.filter(t => t.completed).length;
+            document.getElementById('todo-stats').innerText = `${completedCount} / ${todos.length} 개 완료`;
+            document.getElementById('material-stats').innerText = `${materials.length} 개`;
+            document.getElementById('total-study-time').innerText = `${Math.floor(totalStudyMinutes)}분`;
+        }
+
+        // 초기 실행
+        checkAuth();
+        renderTodos();
+        renderMaterials();
+        renderEvents();
+        updateStats();
+        updateLeaderboard();
+        updateTimerDisplay();
+    </script>
+</body>
+</html>
